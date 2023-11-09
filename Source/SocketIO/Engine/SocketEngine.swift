@@ -29,7 +29,7 @@ import Starscream
 /// The class that handles the engine.io protocol and transports.
 /// See `SocketEnginePollable` and `SocketEngineWebsocket` for transport specific methods.
 open class SocketEngine:
-        NSObject, WebSocketDelegate, URLSessionDelegate, SocketEnginePollable, SocketEngineWebsocket, ConfigSettable {
+        NSObject, SocketEnginePollable, SocketEngineWebsocket, ConfigSettable {
     // MARK: Properties
 
     private static let logType = "SocketEngine"
@@ -721,7 +721,7 @@ open class SocketEngine:
     }
 }
 
-extension SocketEngine {
+extension SocketEngine: URLSessionDelegate {
     // MARK: URLSessionDelegate methods
 
     /// Delegate called when the session becomes invalid.
@@ -736,17 +736,20 @@ enum EngineError: Error {
     case canceled
 }
 
-extension SocketEngine {
+
+extension SocketEngine: WebSocketDelegate {
+   
+    
     /// Delegate method for WebSocketDelegate.
     ///
     /// - Parameters:
     ///   - event: WS Event
     ///   - _:
-    public func didReceive(event: WebSocketEvent, client _: WebSocket) {
+    public func didReceive(event: Starscream.WebSocketEvent, client: Starscream.WebSocketClient) {
         switch event {
         case let .connected(headers):
             wsConnected = true
-            client?.engineDidWebsocketUpgrade(headers: headers)
+            self.client?.engineDidWebsocketUpgrade(headers: headers)
             websocketDidConnect()
         case .cancelled:
             wsConnected = false
