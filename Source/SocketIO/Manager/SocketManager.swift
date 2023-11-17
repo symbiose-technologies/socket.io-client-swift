@@ -135,6 +135,32 @@ open class SocketManager: NSObject, SocketManagerSpec, SocketParsable, SocketDat
     private var currentReconnectAttempt = 0
     private var reconnecting = false
 
+    
+    //Symbiose
+    private var _customJsonDecoder: JSONDecoder? = nil
+    
+    public func setCustomJsonDecoder(_ decoder: JSONDecoder?) {
+        self._customJsonDecoder = decoder
+    }
+    public var customJsonDecoder: JSONDecoder? {
+        self._customJsonDecoder
+    }
+    
+    var _customStringToDataDecoderFn: ((String) throws -> [Any])? = nil
+    
+    public var customStringToDataDecoderFn: ((String) throws -> [Any])? {
+        self._customStringToDataDecoderFn
+    }
+    
+    public func setCustomStringToDataDecoder(_ decodeFn: @escaping (String) throws -> [Any]) {
+        self._customStringToDataDecoderFn = decodeFn
+    }
+    
+    
+    
+    
+    
+    
     // MARK: Initializers
 
     /// Type safe way to create a new SocketIOClient. `opts` can be omitted.
@@ -611,4 +637,11 @@ open class SocketManager: NSObject, SocketManagerSpec, SocketParsable, SocketDat
     func setTestStatus(_ status: SocketIOStatus) {
         self.status = status
     }
+    
+    
+    
+    
+    
+    
+    
 }

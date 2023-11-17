@@ -40,6 +40,17 @@ public protocol SocketParsable : AnyObject {
     /// - parameter message: The string that needs parsing.
     /// - returns: A completed socket packet if there is no more data left to collect.
     func parseSocketMessage(_ message: String) -> SocketPacket?
+    
+    
+    
+    //Symbiose
+    func setCustomJsonDecoder(_ decoder: JSONDecoder?) -> Void
+    var customJsonDecoder: JSONDecoder? { get }
+    
+    var customStringToDataDecoderFn: ((String) throws -> [Any])? { get }
+    func setCustomStringToDataDecoder(_ decodeFn: @escaping (String) throws -> [Any]) -> Void
+    
+    
 }
 
 /// Errors that can be thrown during parsing.
@@ -128,13 +139,28 @@ public extension SocketParsable where Self: SocketManagerSpec & SocketDataBuffer
     }
 
     // Parses data for events
-    private func parseData(_ data: String) throws -> [Any] {
+    private func parseDataLeg(_ data: String) throws -> [Any] {
         do {
             return try data.toArray()
         } catch {
             throw SocketParsableError.invalidDataArray
         }
     }
+    
+    //SYMBIOSE
+    private func parseData(_ data: String) throws -> [Any] {
+        do {
+            if let customStringToDataDecoderFn {
+                return try customStringToDataDecoderFn(data)
+            } else {
+                return try data.toArray()
+            }
+            
+        } catch {
+            throw SocketParsableError.invalidDataArray
+        }
+    }
+    
 
     /// Called when the engine has received a string that should be parsed into a socket.io packet.
     ///

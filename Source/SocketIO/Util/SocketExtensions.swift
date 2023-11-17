@@ -109,6 +109,9 @@ extension Dictionary where Key == String, Value == Any {
 
 extension String {
     func toArray() throws -> [Any] {
+//        debugPrint("SocketExtensions String.toArray() string raw:")
+//        debugPrint(self)
+        
         guard let stringData = data(using: .utf16, allowLossyConversion: false) else { return [] }
         guard let array = try JSONSerialization.jsonObject(with: stringData, options: .mutableContainers) as? [Any] else {
              throw JSONError.notArray
