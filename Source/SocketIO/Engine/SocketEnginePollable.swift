@@ -71,6 +71,12 @@ public protocol SocketEnginePollable: SocketEngineSpec {
     func stopPolling()
 }
 
+
+//extension SocketEnginePollable {
+//    public var wsIsConnected: Bool? { nil }
+//}
+
+
 // Default polling methods
 extension SocketEnginePollable {
     func createRequestForPostWithPostWait() -> URLRequest {

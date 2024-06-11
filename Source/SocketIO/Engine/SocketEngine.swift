@@ -36,8 +36,8 @@ open class SocketEngine: NSObject, WebSocketDelegate, URLSessionDelegate,
 
     private static let logType = "SocketEngine"
 
-    /// The queue that all engine actions take place on.
-    public let engineQueue = DispatchQueue(label: "com.socketio.engineHandleQueue")
+    /// The queue that all engine actions take place on. MUST BE SERIAL
+    public let engineQueue: DispatchQueue
 
     /// The connect parameters sent during a connect.
     public var connectParams: [String: Any]? {
@@ -132,6 +132,11 @@ open class SocketEngine: NSObject, WebSocketDelegate, URLSessionDelegate,
     /// Whether or not the WebSocket is currently connected.
     public private(set) var wsConnected = false
 
+    public var wsIsConnected: Bool? {
+        self.wsConnected
+    }
+    
+    
     /// The client for this engine.
     public weak var client: SocketEngineClient?
 
@@ -161,10 +166,15 @@ open class SocketEngine: NSObject, WebSocketDelegate, URLSessionDelegate,
     /// - parameter client: The client for this engine.
     /// - parameter url: The url for this engine.
     /// - parameter config: An array of configuration options for this engine.
-    public init(client: SocketEngineClient, url: URL, config: SocketIOClientConfiguration) {
+    public init(client: SocketEngineClient, url: URL, 
+                config: SocketIOClientConfiguration,
+                engineQueue: DispatchQueue = DispatchQueue(label: "com.socketio.engineHandleQueue")) {
         self.client = client
         self.url = url
 
+        
+        self.engineQueue = engineQueue
+        
         super.init()
 
         setConfigs(config)
@@ -179,8 +189,10 @@ open class SocketEngine: NSObject, WebSocketDelegate, URLSessionDelegate,
     /// - parameter client: The client for this engine.
     /// - parameter url: The url for this engine.
     /// - parameter options: The options for this engine.
-    public required convenience init(client: SocketEngineClient, url: URL, options: [String: Any]?) {
-        self.init(client: client, url: url, config: options?.toSocketConfiguration() ?? [])
+    public required convenience init(client: SocketEngineClient, url: URL, 
+                                     options: [String: Any]?,
+                                     engineQueue: DispatchQueue = DispatchQueue(label: "com.socketio.engineHandleQueue")) {
+        self.init(client: client, url: url, config: options?.toSocketConfiguration() ?? [], engineQueue: engineQueue)
     }
 
     /// :nodoc:
@@ -750,6 +762,36 @@ extension SocketEngine {
     ///   - event: WS Event
     ///   - _:
     public func didReceive(event: Starscream.WebSocketEvent, client: Starscream.WebSocketClient) {
+        let urlTxt = self.url.absoluteString
+        switch event {
+            //debug print each of the cases
+        case .connected:
+            DefaultSocketLogger.Logger.log("didReceive: connected", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .disconnected:
+            DefaultSocketLogger.Logger.log("didReceive: disconnected", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .text:
+            DefaultSocketLogger.Logger.log("didReceive: text", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .binary:
+            DefaultSocketLogger.Logger.log("didReceive: binary", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .ping:
+            DefaultSocketLogger.Logger.log("didReceive: ping", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .pong:
+            DefaultSocketLogger.Logger.log("didReceive: pong", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .viabilityChanged:
+            DefaultSocketLogger.Logger.log("didReceive: viabilityChanged", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .reconnectSuggested:
+            DefaultSocketLogger.Logger.log("didReceive: reconnectSuggested", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .cancelled:
+            DefaultSocketLogger.Logger.log("didReceive: cancelled", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .error(let error):
+            DefaultSocketLogger.Logger.log("didReceive: error: \(error?.localizedDescription ?? "nil")", type: "Starscream.WebSocketEvent : \(urlTxt)")
+        case .peerClosed:
+            DefaultSocketLogger.Logger.log("didReceive: peerClosed", type: "Starscream.WebSocketEvent : \(urlTxt)")
+            
+        }
+        
+        
+        
         switch event {
         case let .connected(headers):
             wsConnected = true
@@ -765,8 +807,30 @@ extension SocketEngine {
             parseEngineMessage(msg)
         case let .binary(data):
             parseEngineData(data)
+        case .error(let error):
+            wsConnected = false
+            websocketDidDisconnect(error: error)
         case _:
             break
         }
     }
+    
+    /*
+     
+     public enum WebSocketEvent {
+         case connected([String: String])
+         case disconnected(String, UInt16)
+         case text(String)
+         case binary(Data)
+         case pong(Data?)
+         case ping(Data?)
+         case error(Error?)
+         case viabilityChanged(Bool)
+         case reconnectSuggested(Bool)
+         case cancelled
+         case peerClosed
+     }
+
+     */
+    
 }

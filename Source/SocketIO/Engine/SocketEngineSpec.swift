@@ -91,6 +91,8 @@ public protocol SocketEngineSpec: AnyObject {
     /// The WebSocket for this engine.
     var ws: WebSocket? { get }
 
+    var wsIsConnected: Bool? { get }
+    
     // MARK: Initializers
 
     /// Creates a new engine.
@@ -98,7 +100,7 @@ public protocol SocketEngineSpec: AnyObject {
     /// - parameter client: The client for this engine.
     /// - parameter url: The url for this engine.
     /// - parameter options: The options for this engine.
-    init(client: SocketEngineClient, url: URL, options: [String: Any]?)
+    init(client: SocketEngineClient, url: URL, options: [String: Any]?, engineQueue: DispatchQueue)
 
     // MARK: Methods
 

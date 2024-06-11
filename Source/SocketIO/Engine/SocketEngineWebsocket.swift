@@ -49,6 +49,10 @@ public protocol SocketEngineWebsocket: SocketEngineSpec {
                               completion: (() -> ())?)
 }
 
+//extension SocketEngineWebsocket {
+//    public var wsIsConnected: Bool? { wsConnected }
+//}
+
 // WebSocket methods
 extension SocketEngineWebsocket {
     func probeWebSocket() {
